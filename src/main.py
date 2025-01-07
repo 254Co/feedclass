@@ -1,11 +1,11 @@
 import logging
 import subprocess
-
 from feed.rss_feed_manager import RssFeedManager
 from feed.redis_client import RedisClient
 from feed.kafka_producer import KafkaProducerService
 from feed.kafka_consumer import KafkaConsumerService
 from feed.elasticsearch_client import ElasticsearchClient
+from feed.nlp_processor import NlpProcessor  # Import NlpProcessor
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,6 +54,10 @@ def main():
         # Start Kafka and create topic
         start_kafka()
         create_topic()
+
+        # Fetch and process feeds using PySpark
+        feed_manager.fetch_all_feeds_sync()  # Fetch feeds
+        feed_manager.process_feeds_with_spark()  # Process feeds with PySpark
 
         # Start consuming messages
         kafka_consumer.consume_messages()

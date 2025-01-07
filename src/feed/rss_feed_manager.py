@@ -4,6 +4,7 @@ import hashlib
 from .rss_feed import RssFeed
 from .kafka_producer import KafkaProducerService  # Import KafkaProducerService
 from .elasticsearch_client import ElasticsearchClient  # Import ElasticsearchClient
+from pyspark.sql import SparkSession  # Import SparkSession for PySpark
 
 class RssFeedManager:
     def __init__(self, kafka_producer: KafkaProducerService = None, elasticsearch_client: ElasticsearchClient = None):
@@ -79,6 +80,24 @@ class RssFeedManager:
 
             except Exception as e:
                 logging.error(f"Error fetching feed {feed.feed_url}: {e}", exc_info=True)
+
+    def process_feeds_with_spark(self):
+        """
+        Processes all feeds using PySpark for distributed computing.
+        """
+        spark = SparkSession.builder.appName("RssFeedManagerProcessing").getOrCreate()
+        all_entries = []
+
+        for feed in self.feeds.values():
+            feed.fetch_feed()  # Ensure the feed is fetched
+            all_entries.extend(feed.entries)  # Collect all entries
+
+        # Create a DataFrame from all entries
+        df = spark.createDataFrame(all_entries)
+
+        # Process the DataFrame for NLP tasks
+        df.show()  # Display the DataFrame for demonstration purposes
+        logging.info("Processed all feeds with Spark.")
 
     def apply_nlp_to_all_entries(self) -> None:
         """
